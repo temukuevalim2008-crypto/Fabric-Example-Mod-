@@ -33,6 +33,5 @@ jobs:
         with:
           name: Artifacts
           path: |
-            **/.github/workflows/build/libs/*.jar
-            **/build/libs/*.jar
-            ./**/*.jar
+            **/*.jar
+            !**/gradle-wrapper.jar
