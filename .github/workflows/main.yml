@@ -1,8 +1,9 @@
 name: build
 
 on:
-  pull_request:
   push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,35 +21,49 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Find and build mod
+      - name: Check project structure
         run: |
-          GRADLEW_PATH=$(find . -name "gradlew" -type f -print -quit)
+          echo "=== PROJECT STRUCTURE ==="
+          find . -maxdepth 3 -type f | sort
+          echo "========================="
 
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "ОШИБКА: gradlew не найден!"
-            echo "Содержимое репозитория:"
-            find . -maxdepth 3 -type f | sort
+      - name: Find Gradle wrapper
+        run: |
+          if [ ! -f "./gradlew" ]; then
+            echo "ОШИБКА: ./gradlew не найден в корне проекта!"
+            echo
+            echo "gradlew найден в следующих местах:"
+            find . -name "gradlew" -type f -print
             exit 1
           fi
 
-          echo "Найден Gradle wrapper: $GRADLEW_PATH"
-
-          MOD_DIR=$(dirname "$GRADLEW_PATH")
-          cd "$MOD_DIR"
-
           chmod +x ./gradlew
-          ./gradlew build --no-daemon
 
-          echo "=== BUILD/LIBS ==="
-          ls -lah build/libs/ || true
+          echo "Gradle wrapper найден:"
+          ls -lah ./gradlew
 
-          echo "=== ВСЕ JAR ФАЙЛЫ ==="
+      - name: Build mod
+        run: |
+          ./gradlew build --no-daemon --stacktrace
+
+      - name: Show build files
+        if: always()
+        run: |
+          echo "=== build/libs ==="
+
+          if [ -d "./build/libs" ]; then
+            ls -lah ./build/libs/
+          else
+            echo "Папка build/libs не существует!"
+          fi
+
+          echo
+          echo "=== ALL JAR FILES ==="
           find . -type f -name "*.jar" -print
 
       - name: Upload mod
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
-          path: "**/build/libs/*.jar"
+          name: Minecraft-Mod
+          path: build/libs/*.jar
           if-no-files-found: error
-          
