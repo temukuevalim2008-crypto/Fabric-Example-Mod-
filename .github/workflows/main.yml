@@ -20,18 +20,21 @@ jobs:
         run: |
           GRADLEW_PATH=$(find . -name "gradlew" -print -quit)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл gradlew вообще не найден в репозитории!"
+            echo "КРИТИЧЕСКАЯ ОШИБКА: Файл gradlew вообще не найден!"
             exit 1
           fi
           MOD_DIR=$(dirname "$GRADLEW_PATH")
           cd "$MOD_DIR"
           chmod +x ./gradlew
-          ./gradlew build
+          ./gradlew build --no-daemon
+          
+          echo "=== СПИСОК ВСЕХ СОЗДАННЫХ JAR ФАЙЛОВ ==="
+          find . -name "*.jar"
+          echo "========================================"
 
       - name: capture build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
-          path: |
-            **/*.jar
-            !**/gradle-wrapper.jar
+          path: "**/build/libs/*.jar"
+
